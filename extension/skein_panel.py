@@ -12,7 +12,7 @@ from .property_groups import hash_over_64
 
 class SkeinPanelObject(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for an object"""
-    bl_label = "Skein Bevy Panel"
+    bl_label = "Bevy Skein Panel"
     bl_idname = "OBJECT_PT_skein"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -28,7 +28,7 @@ class SkeinPanelObject(bpy.types.Panel):
 
 class SkeinPanelMesh(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a mesh"""
-    bl_label = "Skein Bevy Panel"
+    bl_label = "Bevy Skein Panel"
     bl_idname = "MESH_PT_skein"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -44,7 +44,7 @@ class SkeinPanelMesh(bpy.types.Panel):
 
 class SkeinPanelMaterial(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a material"""
-    bl_label = "Skein Bevy Panel"
+    bl_label = "Bevy Skein Panel"
     bl_idname = "MATERIAL_PT_skein"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -60,7 +60,7 @@ class SkeinPanelMaterial(bpy.types.Panel):
 
 class SkeinPanelScene(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a scene"""
-    bl_label = "Skein Bevy Panel"
+    bl_label = "Bevy Skein Panel"
     bl_idname = "SCENE_PT_skein"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -76,7 +76,7 @@ class SkeinPanelScene(bpy.types.Panel):
 
 class SkeinPanelLight(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a light"""
-    bl_label = "Skein Bevy Panel"
+    bl_label = "Bevy Skein Panel"
     bl_idname = "LIGHT_PT_skein"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -92,7 +92,7 @@ class SkeinPanelLight(bpy.types.Panel):
 
 class SkeinPanelCollection(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a collection"""
-    bl_label = "Skein Bevy Panel"
+    bl_label = "Bevy Skein Panel"
     bl_idname = "COLLECTION_PT_skein"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -108,7 +108,7 @@ class SkeinPanelCollection(bpy.types.Panel):
 
 class SkeinPanelBone(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a bone"""
-    bl_label = "Skein Bevy Panel"
+    bl_label = "Bevy Skein Panel"
     bl_idname = "BONE_PT_skein"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -135,7 +135,7 @@ def draw_generic_panel(context, obj, layout, execute_mode, skein_preset_panel_id
         if not registry:
             import textwrap 
 
-            description = "The skein-registry.json text block does not exist. You can create it by fetching from a remote location or by creating the file locally."
+            description = "No skein-registry.json found. Fetch it from a running game with Remote, or choose an existing file with Local."
             wrapper = textwrap.TextWrapper(width=50)
             text_lines = wrapper.wrap(text=description)
             

@@ -153,6 +153,78 @@ class ReloadSkeinRegistryJson(bpy.types.Operator):
 
         return {'FINISHED'}
 
+
+class LoadSkeinRegistryFromFile(bpy.types.Operator):
+    """Load a skein-registry.json from disk"""
+    bl_idname = "wm.load_skein_registry_file"
+    bl_label = "Load Skein Registry From Disk"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    filepath: bpy.props.StringProperty(
+        name="Registry JSON",
+        description="Path to skein-registry.json",
+        subtype='FILE_PATH',
+        maxlen=4096,
+    )
+
+    filter_glob: bpy.props.StringProperty(
+        default="*.json",
+        options={'HIDDEN'},
+    )
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        registry_source_path = (self.filepath or "").strip()
+        if not registry_source_path:
+            return {'CANCELLED'}
+        path = Path(registry_source_path)
+        if not path.is_file():
+            self.report({"ERROR"}, "Registry file not found: " + registry_source_path)
+            return {'CANCELLED'}
+        try:
+            raw_text = path.read_text(encoding="utf-8")
+            embedded_registry = json.loads(raw_text)
+        except json.JSONDecodeError as error:
+            self.report({"ERROR"}, "Invalid JSON in registry file: " + str(error))
+            return {'CANCELLED'}
+        except OSError as error:
+            self.report({"ERROR"}, "Could not read registry file: " + str(error))
+            return {'CANCELLED'}
+
+        if not isinstance(embedded_registry, dict):
+            self.report({"ERROR"}, "Registry JSON must be a JSON object at the root.")
+            return {'CANCELLED'}
+
+        text_body = json.dumps(embedded_registry, indent=4)
+        if "skein-registry.json" in bpy.data.texts:
+            embedded_text = bpy.data.texts["skein-registry.json"]
+            embedded_text.clear()
+            embedded_text.write(text_body)
+        else:
+            embedded_text = bpy.data.texts.new("skein-registry.json")
+            embedded_text.write(text_body)
+
+        process_registry(context, embedded_registry)
+        return {'FINISHED'}
+
+
+class UnloadSkeinRegistry(bpy.types.Operator):
+    """Reset the registry."""
+    bl_idname = "wm.unload_skein_registry"
+    bl_label = "Unload Skein Registry"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        for block_name in ("skein-registry.json", "skein-presets.json"):
+            if block_name in bpy.data.texts:
+                bpy.data.texts.remove(bpy.data.texts[block_name])
+        process_registry(context, {})
+        self.report({"INFO"}, "Skein registry unloaded.")
+        return {'FINISHED'}
+
 def process_registry(context, registry):
     """
     registry is a dict

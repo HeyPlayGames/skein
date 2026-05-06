@@ -5,7 +5,12 @@ from .op_apply_preset import register as register_op_apply_preset, unregister as
 from .cli_dump_component_data import dump_component_data # type: ignore
 from .cli_change_component_path import change_component_path # type: ignore
 from .op_insert_component import register as register_op_insert_component, unregister as unregister_op_insert_component
-from .op_registry_loading import FetchRemoteTypeRegistry, ReloadSkeinRegistryJson
+from .op_registry_loading import (
+    FetchRemoteTypeRegistry,
+    ReloadSkeinRegistryJson,
+    LoadSkeinRegistryFromFile,
+    UnloadSkeinRegistry,
+)
 from .op_remove_component import register as register_op_remove_component, unregister as unregister_op_remove_component
 from .op_debug_check_components import DebugCheckComponents
 from .property_groups import ComponentData
@@ -107,6 +112,8 @@ def menu_func(self, context):
     self.layout.operator(FetchRemoteTypeRegistry.bl_idname)
     # self.layout.operator(DebugCheckComponents.bl_idname)
     self.layout.operator(ReloadSkeinRegistryJson.bl_idname)
+    self.layout.operator(LoadSkeinRegistryFromFile.bl_idname)
+    self.layout.operator(UnloadSkeinRegistry.bl_idname)
 
 def register():
     bpy.utils.register_class(SkeinAddonPreferences)
@@ -166,6 +173,8 @@ def register():
     # operations
     bpy.utils.register_class(FetchRemoteTypeRegistry)
     bpy.utils.register_class(ReloadSkeinRegistryJson)
+    bpy.utils.register_class(LoadSkeinRegistryFromFile)
+    bpy.utils.register_class(UnloadSkeinRegistry)
     bpy.utils.register_class(DebugCheckComponents)
     ## Insertion Operations
     register_op_insert_component()
@@ -228,6 +237,8 @@ def unregister():
     # operations
     bpy.utils.unregister_class(FetchRemoteTypeRegistry)
     bpy.utils.unregister_class(ReloadSkeinRegistryJson)
+    bpy.utils.unregister_class(LoadSkeinRegistryFromFile)
+    bpy.utils.unregister_class(UnloadSkeinRegistry)
     bpy.utils.unregister_class(DebugCheckComponents)
     ## Insertion Operations
     unregister_op_insert_component()
