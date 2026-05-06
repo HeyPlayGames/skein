@@ -3,6 +3,7 @@ import json
 import inspect
 
 from .property_groups import hash_over_64
+from .skein_component_ui_list import SKEIN_UL_component_list
 
 # ---------------------------------- #
 #  Skein Panel for adding components #
@@ -146,34 +147,33 @@ def draw_generic_panel(context, obj, layout, execute_mode, skein_preset_panel_id
 
             row = layout.row(align=True)
             row.operator("wm.fetch_type_registry", text="Remote")
-            row.operator("wm.reload_skein_registry", text="Local")
+            row.operator("wm.load_skein_registry_file", text="Local")
             return
 
-        row = layout.row()
+        row = layout.row(align=True)
+        row.operator("wm.fetch_type_registry", text="Remote")
+        row.operator("wm.load_skein_registry_file", text="Local")
+        row.operator("wm.unload_skein_registry", text="", icon="X")
 
-        if registry:
-            row = layout.row(align=True)
-            row.operator("wm.fetch_type_registry", text="Fetch a Remote Type Registry")
+        layout.label(text="Insert a new Component")
+        box = layout.box()
+        box.prop_search(
+            context.window_manager,
+            'selected_component',
+            global_skein,
+            "components",
+            text="type",
+            icon="BOIDS"
+        )
 
-            layout.label(text="Insert a new Component")
-            box = layout.box()
-            box.prop_search(
-                context.window_manager,
-                'selected_component',
-                global_skein,
-                "components",
-                text="type",
-                icon="BOIDS"
-            )
-
-            row = box.row()
-            row.operator(execute_mode + ".insert_component")
+        row = box.row()
+        row.operator(execute_mode + ".insert_component")
 
         layout.label(text="Components on this " + execute_mode + ":")
 
         layout.template_list(
-            "UI_UL_list",
-            "components list",
+            "SKEIN_UL_component_list",
+            "components_list",
             obj,
             "skein_two",
             obj,
@@ -198,11 +198,7 @@ def draw_generic_panel(context, obj, layout, execute_mode, skein_preset_panel_id
                 text="",
             )
 
-            row = layout.row()
-            row.operator(execute_mode + ".remove_component")
-
-            row = layout.row()
-            row.separator()
+            layout.separator()
 
             if inspect.isclass(skein_property_groups[type_path]):
                 if hash_over_64(type_path) not in active_component_data:
@@ -438,6 +434,7 @@ def render_two(layout, context, context_key):
     return
 
 classes = (
+    SKEIN_UL_component_list,
     SkeinPanelObject,
     SkeinPanelMesh,
     SkeinPanelMaterial,
