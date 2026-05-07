@@ -75,6 +75,8 @@ class SkeinPanelMesh(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
+        if getattr(context, "mesh", None) is None:
+            return False
         return resolve_skein_component_target(context) is not None
 
     def draw(self, context):
@@ -123,6 +125,8 @@ class SkeinPanelLight(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
+        if getattr(context, "light", None) is None:
+            return False
         return resolve_skein_component_target(context) is not None
 
     def draw(self, context):
