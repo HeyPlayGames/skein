@@ -4,7 +4,11 @@ from bpy.app.handlers import persistent
 from .op_apply_preset import register as register_op_apply_preset, unregister as unregister_op_apply_preset
 from .cli_dump_component_data import dump_component_data # type: ignore
 from .cli_change_component_path import change_component_path # type: ignore
-from .op_insert_component import register as register_op_insert_component, unregister as unregister_op_insert_component
+from .op_insert_component import (
+    register as register_op_insert_component,
+    unregister as unregister_op_insert_component,
+    on_selected_component_changed,
+)
 from .op_registry_loading import (
     FetchRemoteTypeRegistry,
     ReloadSkeinRegistryJson,
@@ -66,29 +70,11 @@ class PGSkeinWindowProps(bpy.types.PropertyGroup):
     registry: bpy.props.StringProperty(name="Bevy Registry", default="{}") # type: ignore
     components: bpy.props.CollectionProperty(type=ComponentTypeData) # type: ignore
 
-def on_select_new_component(self, context):
-    """Executed when a new component is selected for insertion onto an object
-
-    currently just for debugging. you can infer what fields should be shown in the ui by reading the registry data.
-    """
-
-    debug = False
-    if __package__ in bpy.context.preferences.addons:
-        debug = bpy.context.preferences.addons[__package__].preferences.debug
-
-    if debug:
-        print("\n###### on_select_new_component")
-        selected_component = context.window_manager.selected_component;
-
-        print("\nselected_component: ", selected_component)
-        global_skein = context.window_manager.skein
-        if global_skein.registry:
-            data = json.loads(global_skein.registry)
-            if selected_component in data and len(data.keys()) > 0:
-                print("\n", json.dumps(data[selected_component], indent=4))
-            else:
-                print("\nno data in registry")
-        print("\n######\n")
+    registry_actions_expanded: bpy.props.BoolProperty(
+        name="Registry actions",
+        description="When a registry is loaded, expands the Registry section at the bottom of the Skein panel",
+        default=False,
+    ) # type: ignore
 
 # --------------------------------- #
 #  a hook to run when opening a     #
@@ -162,8 +148,8 @@ def register():
     # TODO: move this to common property group for all object, material, mesh, etc extras
     bpy.types.WindowManager.selected_component = bpy.props.StringProperty(
         name="component type path",
-        description="The component that will be added if selected",
-        update=on_select_new_component,
+        description="Add a component to the entity.",
+        update=on_selected_component_changed,
     )
     # skein_property_groups is a dict keyed by component type_path
     # each type_path's value is a PropertyGroup that we can introspect

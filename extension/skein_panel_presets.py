@@ -17,7 +17,7 @@ class SkeinPanelPresetsObject(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.object.insert_component.poll() and "skein-presets.json" in bpy.data.texts
+        return context.object is not None and "skein-presets.json" in bpy.data.texts
 
     def draw(self, context):
         obj = context.object
@@ -33,7 +33,7 @@ class SkeinPanelPresetsMesh(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.mesh.insert_component.poll() and "skein-presets.json" in bpy.data.texts
+        return context.mesh is not None and "skein-presets.json" in bpy.data.texts
 
     def draw(self, context):
         obj = context.mesh
@@ -49,7 +49,7 @@ class SkeinPanelPresetsMaterial(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.material.insert_component.poll() and "skein-presets.json" in bpy.data.texts
+        return context.material is not None and "skein-presets.json" in bpy.data.texts
 
     def draw(self, context):
         obj = context.material
@@ -65,7 +65,7 @@ class SkeinPanelPresetsScene(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.scene.insert_component.poll() and "skein-presets.json" in bpy.data.texts
+        return context.scene is not None and "skein-presets.json" in bpy.data.texts
 
     def draw(self, context):
         obj = context.scene
@@ -81,7 +81,7 @@ class SkeinPanelPresetsLight(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.light.insert_component.poll() and "skein-presets.json" in bpy.data.texts
+        return context.light is not None and "skein-presets.json" in bpy.data.texts
 
     def draw(self, context):
         obj = context.light
@@ -97,7 +97,7 @@ class SkeinPanelPresetsCollection(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.collection.insert_component.poll() and "skein-presets.json" in bpy.data.texts
+        return context.collection is not None and "skein-presets.json" in bpy.data.texts
 
     def draw(self, context):
         obj = context.collection
@@ -113,7 +113,7 @@ class SkeinPanelPresetsBone(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.bone.insert_component.poll() and "skein-presets.json" in bpy.data.texts
+        return context.bone is not None and "skein-presets.json" in bpy.data.texts
 
     def draw(self, context):
         # we use context.bone because context.active_bone will return 

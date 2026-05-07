@@ -4,102 +4,95 @@ import bpy
 from .object_to_form import object_to_form
 from .property_groups import hash_over_64
 
-class InsertComponentOnObject(bpy.types.Operator):
-    """Insert a component on the selected object"""
-    bl_idname = "object.insert_component" # unique identifier. first word is required by extensions review team to be from a specific set of words
-    bl_label = "Insert Component Data (Object)" # Shows up in the UI
-    bl_options = {'REGISTER', 'UNDO'} # enable undo (which we might not need)
+
+def resolve_insert_component_target_properties(context):
+    """Resolve datablock from the active Properties editor tab (object vs mesh vs …)."""
+    space = getattr(context, "space_data", None)
+    if space is None or space.type != "PROPERTIES":
+        return None
+    tab = getattr(space, "context", None)
+    if tab == "OBJECT":
+        return getattr(context, "object", None)
+    if tab == "DATA":
+        if getattr(context, "mesh", None):
+            return context.mesh
+        if getattr(context, "light", None):
+            return context.light
+        return None
+    if tab == "MATERIAL":
+        return getattr(context, "material", None)
+    if tab == "SCENE":
+        return getattr(context, "scene", None)
+    if tab == "COLLECTION":
+        return getattr(context, "collection", None)
+    if tab == "BONE":
+        return getattr(context, "bone", None)
+    return None
+
+
+def resolve_skein_component_target(context):
+    """Resolve which datablock owns Skein components for insert/remove/panel poll.
+
+    Uses the Properties tab when the active space is the Properties editor so mesh
+    vs object stay distinct. Otherwise falls back to a single supported datablock
+    (scripting, tests, other editors); order prefers lamp/light over mesh data
+    when multiple exist, and object over mesh so object.insert-style calls match
+    prior behavior.
+    """
+    target = resolve_insert_component_target_properties(context)
+    if target is not None:
+        return target
+    if getattr(context, "bone", None):
+        return context.bone
+    if getattr(context, "collection", None):
+        return context.collection
+    if getattr(context, "scene", None):
+        return context.scene
+    if getattr(context, "material", None):
+        return context.material
+    if getattr(context, "light", None):
+        return context.light
+    if getattr(context, "object", None):
+        return context.object
+    if getattr(context, "mesh", None):
+        return context.mesh
+    return None
+
+def on_selected_component_changed(_self, context):
+    selected_component = context.window_manager.selected_component
+    if not selected_component:
+        return
+
+    target = resolve_insert_component_target_properties(context)
+    if target is None:
+        return
+
+    global_skein = context.window_manager.skein
+    if not global_skein.registry:
+        return
+
+    registry = json.loads(global_skein.registry)
+    if not list(registry) or selected_component not in registry or not registry[selected_component]:
+        return
+
+    insert_component_data(context, target)
+
+
+class SkeinInsertComponent(bpy.types.Operator):
+    """Insert a Skein component on the datablock resolved from context."""
+    bl_idname = "wm.skein_insert_component"
+    bl_label = "Insert Skein Component Data"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
-        return hasattr(context, "object") and context.object is not None
+        return resolve_skein_component_target(context) is not None
 
     def execute(self, context):
-        insert_component_data(context, context.object)
-        return {'FINISHED'}
-
-class InsertComponentOnMesh(bpy.types.Operator):
-    """Insert a component on the selected mesh"""
-    bl_idname = "mesh.insert_component" # unique identifier. first word is required by extensions review team to be from a specific set of words
-    bl_label = "Insert Component Data (Mesh)" # Shows up in the UI
-    bl_options = {'REGISTER', 'UNDO'} # enable undo (which we might not need)
-
-    @classmethod
-    def poll(cls, context):
-        return hasattr(context, "mesh") and context.mesh is not None
-
-    def execute(self, context):
-        insert_component_data(context, context.mesh)
-        return {'FINISHED'}
-
-class InsertComponentOnMaterial(bpy.types.Operator):
-    """Insert a component on the selected material"""
-    bl_idname = "material.insert_component" # unique identifier. first word is required by extensions review team to be from a specific set of words
-    bl_label = "Insert Component Data (Material)" # Shows up in the UI
-    bl_options = {'REGISTER', 'UNDO'} # enable undo (which we might not need)
-
-    @classmethod
-    def poll(cls, context):
-        return hasattr(context, "material") and context.material is not None
-
-    def execute(self, context):
-        insert_component_data(context, context.material)
-        return {'FINISHED'}
-
-class InsertComponentOnScene(bpy.types.Operator):
-    """Insert a component on the selected scene"""
-    bl_idname = "scene.insert_component" # unique identifier. first word is required by extensions review team to be from a specific set of words
-    bl_label = "Insert Component Data (Scene)" # Shows up in the UI
-    bl_options = {'REGISTER', 'UNDO'} # enable undo (which we might not need)
-
-    @classmethod
-    def poll(cls, context):
-        return hasattr(context, "scene") and context.scene is not None
-
-    def execute(self, context):
-        insert_component_data(context, context.scene)
-        return {'FINISHED'}
-    
-class InsertComponentOnLight(bpy.types.Operator):
-    """Insert a component on the selected light"""
-    bl_idname = "light.insert_component" # unique identifier. first word is required by extensions review team to be from a specific set of words
-    bl_label = "Insert Component Data (Light)" # Shows up in the UI
-    bl_options = {'REGISTER', 'UNDO'} # enable undo (which we might not need)
-
-    @classmethod
-    def poll(cls, context):
-        return hasattr(context, "light") and context.light is not None
-
-    def execute(self, context):
-        insert_component_data(context, context.light)
-        return {'FINISHED'}
-
-class InsertComponentOnCollection(bpy.types.Operator):
-    """Insert a component on the selected collection"""
-    bl_idname = "collection.insert_component" # unique identifier. first word is required by extensions review team to be from a specific set of words
-    bl_label = "Insert Component Data (Collection)" # Shows up in the UI
-    bl_options = {'REGISTER', 'UNDO'} # enable undo (which we might not need)
-
-    @classmethod
-    def poll(cls, context):
-        return hasattr(context, "collection") and context.collection is not None
-
-    def execute(self, context):
-        insert_component_data(context, context.collection)
-        return {'FINISHED'}
-
-class InsertComponentOnBone(bpy.types.Operator):
-    """Insert a component on the selected bone"""
-    bl_idname = "bone.insert_component" # unique identifier. first word is required by extensions review team to be from a specific set of words
-    bl_label = "Insert Component Data (Bone)" # Shows up in the UI
-    bl_options = {'REGISTER', 'UNDO'} # enable undo (which we might not need)
-
-    @classmethod
-    def poll(cls, context):
-        return hasattr(context, "bone") and context.bone is not None
-
-    def execute(self, context):
-        insert_component_data(context, context.bone)
+        target = resolve_skein_component_target(context)
+        if target is None:
+            return {'CANCELLED'}
+        insert_component_data(context, target)
         return {'FINISHED'}
 
 def insert_component_data(context, obj):
@@ -170,14 +163,6 @@ def touch_all_fields(context, key):
     except:
         pass
 
-classes = (
-    InsertComponentOnObject,
-    InsertComponentOnMesh,
-    InsertComponentOnMaterial,
-    InsertComponentOnScene,
-    InsertComponentOnLight,
-    InsertComponentOnCollection,
-    InsertComponentOnBone,
-)
+classes = (SkeinInsertComponent,)
 
 register, unregister = bpy.utils.register_classes_factory(classes)

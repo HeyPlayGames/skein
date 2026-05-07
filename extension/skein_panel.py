@@ -3,7 +3,45 @@ import json
 import inspect
 
 from .property_groups import hash_over_64
+from .op_insert_component import resolve_skein_component_target
 from .skein_component_ui_list import SKEIN_UL_component_list
+
+
+def draw_registry_when_missing(layout, global_skein):
+    column = layout.column()
+    column.alignment = "LEFT"
+    row = column.row()
+    row.alignment = "LEFT"
+    row = column.row(align=True)
+    row.operator("wm.fetch_type_registry", text="Remote")
+    row.operator("wm.load_skein_registry_file", text="Local")
+
+
+def draw_registry_collapsible_when_loaded(layout, global_skein):
+    layout.separator()
+    column = layout.column()
+    column.alignment = "LEFT"
+    disclosure_icon = (
+        "DISCLOSURE_TRI_DOWN"
+        if global_skein.registry_actions_expanded
+        else "DISCLOSURE_TRI_RIGHT"
+    )
+    row = column.row()
+    row.alignment = "LEFT"
+    row.prop(
+        global_skein,
+        "registry_actions_expanded",
+        text="Registry",
+        icon=disclosure_icon,
+        emboss=False,
+    )
+    if not global_skein.registry_actions_expanded:
+        return
+    row = column.row(align=True)
+    row.operator("wm.fetch_type_registry", text="Remote")
+    row.operator("wm.load_skein_registry_file", text="Local")
+    row.operator("wm.unload_skein_registry", text="", icon="X")
+
 
 # ---------------------------------- #
 #  Skein Panel for adding components #
@@ -21,11 +59,11 @@ class SkeinPanelObject(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.object.insert_component.poll()
+        return resolve_skein_component_target(context) is not None
 
     def draw(self, context):
         obj = context.object
-        draw_generic_panel(context, obj, self.layout, "object", "OBJECT_PT_skein_preset_panel")
+        draw_generic_panel(context, obj, self.layout, "OBJECT_PT_skein_preset_panel")
 
 class SkeinPanelMesh(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a mesh"""
@@ -37,11 +75,11 @@ class SkeinPanelMesh(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.mesh.insert_component.poll()
+        return resolve_skein_component_target(context) is not None
 
     def draw(self, context):
         obj = context.mesh
-        draw_generic_panel(context, obj, self.layout, "mesh", "MESH_PT_skein_preset_panel")
+        draw_generic_panel(context, obj, self.layout, "MESH_PT_skein_preset_panel")
 
 class SkeinPanelMaterial(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a material"""
@@ -53,11 +91,11 @@ class SkeinPanelMaterial(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.material.insert_component.poll()
+        return resolve_skein_component_target(context) is not None
 
     def draw(self, context):
         obj = context.material
-        draw_generic_panel(context, obj, self.layout, "material", "MATERIAL_PT_skein_preset_panel")
+        draw_generic_panel(context, obj, self.layout, "MATERIAL_PT_skein_preset_panel")
 
 class SkeinPanelScene(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a scene"""
@@ -69,11 +107,11 @@ class SkeinPanelScene(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.scene.insert_component.poll()
+        return resolve_skein_component_target(context) is not None
 
     def draw(self, context):
         obj = context.scene
-        draw_generic_panel(context, obj, self.layout, "scene", "SCENE_PT_skein_preset_panel")
+        draw_generic_panel(context, obj, self.layout, "SCENE_PT_skein_preset_panel")
 
 class SkeinPanelLight(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a light"""
@@ -85,11 +123,11 @@ class SkeinPanelLight(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.light.insert_component.poll()
+        return resolve_skein_component_target(context) is not None
 
     def draw(self, context):
         obj = context.light
-        draw_generic_panel(context, obj, self.layout, "light", "LIGHT_PT_skein_preset_panel")
+        draw_generic_panel(context, obj, self.layout, "LIGHT_PT_skein_preset_panel")
 
 class SkeinPanelCollection(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a collection"""
@@ -101,11 +139,11 @@ class SkeinPanelCollection(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.collection.insert_component.poll()
+        return resolve_skein_component_target(context) is not None
 
     def draw(self, context):
         obj = context.collection
-        draw_generic_panel(context, obj, self.layout, "collection", "COLLECTION_PT_skein_preset_panel")
+        draw_generic_panel(context, obj, self.layout, "COLLECTION_PT_skein_preset_panel")
 
 class SkeinPanelBone(bpy.types.Panel):
     """Creates a Panel in the Object Properties Panel for a bone"""
@@ -117,15 +155,15 @@ class SkeinPanelBone(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.bone.insert_component.poll()
+        return resolve_skein_component_target(context) is not None
 
     def draw(self, context):
         # we use context.bone because context.active_bone will return 
         # an EditBone *or* a Bone and we want a Bone
         obj = context.bone
-        draw_generic_panel(context, obj, self.layout, "bone", "BONE_PT_skein_preset_panel")
+        draw_generic_panel(context, obj, self.layout, "BONE_PT_skein_preset_panel")
 
-def draw_generic_panel(context, obj, layout, execute_mode, skein_preset_panel_id):
+def draw_generic_panel(context, obj, layout, skein_preset_panel_id):
         
         global_skein = context.window_manager.skein
         # TODO: the registry can likely be loaded into a dict in a less
@@ -145,31 +183,17 @@ def draw_generic_panel(context, obj, layout, execute_mode, skein_preset_panel_id
                 row.alignment = 'EXPAND'
                 row.label(text=text)
 
-            row = layout.row(align=True)
-            row.operator("wm.fetch_type_registry", text="Remote")
-            row.operator("wm.load_skein_registry_file", text="Local")
+            draw_registry_when_missing(layout, global_skein)
             return
 
-        row = layout.row(align=True)
-        row.operator("wm.fetch_type_registry", text="Remote")
-        row.operator("wm.load_skein_registry_file", text="Local")
-        row.operator("wm.unload_skein_registry", text="", icon="X")
-
-        layout.label(text="Insert a new Component")
-        box = layout.box()
-        box.prop_search(
+        layout.prop_search(
             context.window_manager,
             'selected_component',
             global_skein,
             "components",
-            text="type",
-            icon="BOIDS"
+            text="Add new component",
+            icon="ADD",
         )
-
-        row = box.row()
-        row.operator(execute_mode + ".insert_component")
-
-        layout.label(text="Components on this " + execute_mode + ":")
 
         layout.template_list(
             "SKEIN_UL_component_list",
@@ -207,6 +231,8 @@ def draw_generic_panel(context, obj, layout, execute_mode, skein_preset_panel_id
                     render_two(layout, active_component_data, hash_over_64(type_path))
             else:
                 layout.prop(active_component_data, hash_over_64(type_path))
+
+        draw_registry_collapsible_when_loaded(layout, global_skein)
 
 def render_two(layout, context, context_key):
     if context_key not in context:

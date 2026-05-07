@@ -23,7 +23,7 @@ class ComponentPropertyTests(unittest.TestCase):
     def test_linear_velocity(self):
 
         bpy.context.window_manager.selected_component = "test_components::LinearVelocity";
-        bpy.ops.object.insert_component()
+        bpy.ops.wm.skein_insert_component()
 
         container = bpy.context.active_object.skein_two[0]
 
@@ -38,7 +38,7 @@ class ComponentPropertyTests(unittest.TestCase):
         )
 
         self.assertEqual(data, [2.0, 0.0, 0.0])
-        bpy.ops.object.remove_component()
+        bpy.ops.wm.skein_remove_component()
 
     def test_snapshots(self):
         self.maxDiff = None
@@ -50,7 +50,7 @@ class ComponentPropertyTests(unittest.TestCase):
                 for type_path, value in snapshot.items():
 
                     bpy.context.window_manager.selected_component = type_path;
-                    bpy.ops.object.insert_component()
+                    bpy.ops.wm.skein_insert_component()
 
                     maybe_hashed_type_path = hash_over_64(type_path)
 
@@ -73,7 +73,7 @@ class ComponentPropertyTests(unittest.TestCase):
                         # we're working in a headless blender
                         # context so we have to clean up shared 
                         # resources ourselves
-                        bpy.ops.object.remove_component()
+                        bpy.ops.wm.skein_remove_component()
 
 if __name__ == '__main__':
     import sys
